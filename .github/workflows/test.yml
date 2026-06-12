@@ -8,3 +8,5 @@ jobs:
     steps:
       - name: Print issue
         run: echo "${{ github.event.issue.body }}"
+      - name: Call AI
+        uses: anthropics/claude-code-action@v1
