@@ -1,20 +1,16 @@
 name: Issue Handler
 on:
-  issues:
+  pull_request_target:
     types: [opened]
-  issue_comment:
-    types: [created]
 jobs:
   process:
     runs-on: ubuntu-latest
     steps:
-      - name: Print issue
-        run: echo "${{ github.event.issue.body }}"
-      - name: Print comment
-        run: echo "${{ github.event.comment.body }}"
+      - name: Checkout PR code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
       - name: Call AI
         uses: anthropics/claude-code-action@v1
         with:
-          prompt: "Summarise this: ${{ github.event.issue.body }}"
-      - name: Run AI output
-        run: echo "${{ steps.call-ai.outputs.response }}"
+          prompt: "Review this: $(cat README.md)"

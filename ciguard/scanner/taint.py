@@ -50,11 +50,8 @@ def analyse_workflow(workflow: Workflow) -> list[Finding]:
                     if source in step_text:
                         ai_received_tainted_input = True
 
-                
             
-
-            if ai_received_tainted_input and step.run:
-                if "steps." in step.run and ".outputs." in step.run:
+            if ai_received_tainted_input and step.run and "steps." in step.run and ".outputs." in step.run:
                     findings.append(Finding(
                         threat_vector="TV5",
                         severity="CRITICAL",
@@ -63,6 +60,16 @@ def analyse_workflow(workflow: Workflow) -> list[Finding]:
                         message="AI step received attacker input, and its output flows into a shell command",
                         fix="Never pass AI output directly into shell commands, validate AI output first.",
                     ))
-
-
+            
+            if step.uses and "actions/checkout" in step.uses:
+                ref = str(step.with_inputs.get("ref", ""))
+                if "pull_request.head" in ref and "pull_request_target" in str(workflow.triggers):
+                    findings.append(Finding(
+                        threat_vector="TV6",
+                        severity="CRITICAL",
+                        file_path=str(workflow.path),
+                        line=i,
+                        message="Workflow uses pull_request_target and checks out PR head — attacker controls the workspace files fed to AI",
+                        fix="Do not check out PR head code in pull_request_target workflows. Use pull_request trigger instead.",
+                    ))
     return findings
