@@ -8,6 +8,7 @@ class WorkflowStep:
     run: str | None
     uses: str | None
     env: dict
+    own_env: dict
     with_inputs: dict
     if_condition: str | None
 
@@ -44,6 +45,7 @@ def parse_workflow(path: Path) -> Workflow | None:
         else:
             triggers = raw_on
         permissions = content.get("permissions") or {}
+        workflow_env = content.get("env") or {}
 
 
         # Extract jobs and steps
@@ -51,13 +53,15 @@ def parse_workflow(path: Path) -> Workflow | None:
         jobs = {}
 
         for job_name, job_info in content.get("jobs").items():
+            job_env = job_info.get("env") or {}
             steps = []
             for step in job_info.get("steps") or []:
                 steps.append(WorkflowStep(
                     name = step.get("name", ""),
                     run = step.get("run"),
                     uses = step.get("uses"),
-                    env = step.get("env") or {},
+                    env = {**workflow_env, **job_env, **(step.get("env") or {})},
+                    own_env = step.get("env") or {},
                     with_inputs = step.get("with") or {},
                     if_condition=step.get("if"),
                 ))

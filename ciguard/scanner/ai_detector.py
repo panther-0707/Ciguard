@@ -17,15 +17,22 @@ AI_KEY_PATTERNS = [
 ]
 
 
+def normalize_action(uses: str) -> str:
+    ref = uses.split("@")[0].lower()
+    parts = ref.split("/")
+    return f"{parts[0]}/{parts[1]}" if len(parts) >= 2 else ref
+
+
 
 def is_ai_step(step: WorkflowStep) -> bool:
-    # Way 1: check step.uses
-    if step.uses:  # make sure it exists first
-        action = step.uses.split("@")[0]  # strip @v1
+    # check step.uses
+    if step.uses:
+        action = normalize_action(step.uses)
         if action in KNOWN_AI_ACTIONS:
             return True
-    # Way 2: check step.env
-    for key in step.env: 
+        
+    # check step.env
+    for key in step.own_env: 
         if key in AI_KEY_PATTERNS:
             return True
 

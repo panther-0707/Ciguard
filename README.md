@@ -127,9 +127,9 @@ CIGuard runs a small pipeline over each workflow file:
 
 CIGuard catches common patterns; it is not exhaustive and can produce both false positives and false negatives. Known gaps in the current version:
 
-- **Only step-level `env` is inspected.** API keys defined at the job or workflow level are not detected, so an AI step configured that way may be missed.
+- **AI-step identification has a narrow gap.** A step is recognized as an AI step if it uses a known AI action or sets an AI API key directly on the step. A generic step (a plain `run:` or an unknown action) that qualifies as an AI call *only* because it inherits a key from job- or workflow-level `env` may not be recognized as one. Attacker input flowing through inherited job/workflow `env` into a *known* AI step is tracked.
 - **TV5 is a heuristic.** It flags when an AI step received tainted input and *any* later step references a `steps.*.outputs.*` value in a shell command, without confirming the referenced output belongs to the AI step. It may over- or under-report.
-- **AI-action matching is exact.** `is_ai_step` matches known action names without the `@version` suffix and is case-sensitive; renamed env keys, action subpaths (`.../setup@v1`), or differently-cased names may be missed.
+- **Renamed AI-key env vars are matched by name only.** `is_ai_step` compares env *key names* against a known list; a custom-named key whose *value* references an AI secret (e.g. `MY_KEY: ${{ secrets.OPENAI_API_KEY }}`) won't be detected.
 - **`step` numbers are positions, not file line numbers.** A finding's `step` index is the step's position within its job.
 - **Detection uses substring matching** on expression strings, so unusual syntax (such as index form `['title']`) may not match.
 - **`ATTACKER_SOURCES` is a curated list,** not a complete enumeration of every untrusted GitHub context.

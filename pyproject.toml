@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "ciguard"
+name = "caga"
 version = "0.1.0"
 description = "Detect prompt injection risks in AI-integrated GitHub Actions"
 requires-python = ">=3.10"
@@ -13,4 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-ciguard = "ciguard.cli:main"
+caga = "ciguard.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["ciguard"]
