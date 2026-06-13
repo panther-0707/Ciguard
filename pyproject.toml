@@ -3,7 +3,7 @@ requires = ["hatchling"]
 build-backend = "hatchling.build"
 
 [project]
-name = "prompt-shield"
+name = "gh-prompt-scan"
 version = "0.1.0"
 description = "Detect prompt injection risks in AI-integrated GitHub Actions"
 requires-python = ">=3.10"
@@ -13,7 +13,7 @@ dependencies = [
 ]
 
 [project.scripts]
-prompt-shield = "ciguard.cli:main"
+gh-prompt-scan = "ciguard.cli:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["ciguard"]
