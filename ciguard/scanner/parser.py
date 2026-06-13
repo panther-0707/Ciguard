@@ -9,6 +9,7 @@ class WorkflowStep:
     uses: str | None
     env: dict
     with_inputs: dict
+    if_condition: str | None
 
 @dataclass
 class WorkflowJob:
@@ -37,7 +38,6 @@ def parse_workflow(path: Path) -> Workflow | None:
         name = content.get("name")
         triggers = content.get(True) or content.get("on")
         permissions = content.get("permissions") or {}
-        jobs = content.get("jobs")
 
 
         # Extract jobs and steps
@@ -52,7 +52,8 @@ def parse_workflow(path: Path) -> Workflow | None:
                     run = step.get("run"),
                     uses = step.get("uses"),
                     env = step.get("env") or {},
-                    with_inputs = step.get("with") or {}
+                    with_inputs = step.get("with") or {},
+                    if_condition=step.get("if"),
                 ))
             
             jobs[job_name] = WorkflowJob(
