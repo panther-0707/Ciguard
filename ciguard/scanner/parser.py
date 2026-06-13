@@ -8,6 +8,7 @@ class WorkflowStep:
     run: str | None
     uses: str | None
     env: dict
+    with_inputs: dict
 
 @dataclass
 class WorkflowJob:
@@ -47,17 +48,18 @@ def parse_workflow(path: Path) -> Workflow | None:
             steps = []
             for step in job_info.get("steps"):
                 steps.append(WorkflowStep(
-                    name=step.get("name", ""),
-                    run=step.get("run"),
-                    uses=step.get("uses"),
-                    env=step.get("env") or {},
+                    name = step.get("name", ""),
+                    run = step.get("run"),
+                    uses = step.get("uses"),
+                    env = step.get("env") or {},
+                    with_inputs = step.get("with") or {}
                 ))
             
             jobs[job_name] = WorkflowJob(
-                name=job_name,
-                steps=steps,
-                permissions=job_info.get("permissions") or {},
-                if_condition=job_info.get("if"),
+                name = job_name,
+                steps = steps,
+                permissions = job_info.get("permissions") or {},
+                if_condition = job_info.get("if"),
             )
 
 

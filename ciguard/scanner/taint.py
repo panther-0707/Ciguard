@@ -29,6 +29,8 @@ def analyse_workflow(workflow: Workflow) -> list[Finding]:
         return findings
     
     for job_name, job in workflow.jobs.items():
+        ai_received_tainted_input = False
+
         for i, step in enumerate(job.steps):
             if step.run:
                 for source in ATTACKER_SOURCES:
@@ -41,5 +43,26 @@ def analyse_workflow(workflow: Workflow) -> list[Finding]:
                             message=f"Attacker controlled '{source}' which was found directly in run: command",
                             fix="Pass untrusted values via env: variables instead of ${{ }} in run: blocks",
                         ))
+                    
+            if is_ai_step(step):
+                step_text = str(step.with_inputs) + str(step.env) + str(step.run)
+                for source in ATTACKER_SOURCES:
+                    if source in step_text:
+                        ai_received_tainted_input = True
+
+                
+            
+
+            if ai_received_tainted_input and step.run:
+                if "steps." in step.run and ".outputs." in step.run:
+                    findings.append(Finding(
+                        threat_vector="TV5",
+                        severity="CRITICAL",
+                        file_path=str(workflow.path),
+                        line=i,
+                        message="AI step received attacker input, and its output flows into a shell command",
+                        fix="Never pass AI output directly into shell commands, validate AI output first.",
+                    ))
+
 
     return findings
