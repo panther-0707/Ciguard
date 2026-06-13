@@ -1,18 +1,18 @@
-# CIGuard
+# CIGI
 
 **A static analyzer that finds prompt-injection and related vulnerabilities in AI-integrated GitHub Actions workflows.**
 
-CIGuard scans the workflow YAML in a repository's `.github/workflows/` directory and flags patterns where untrusted, attacker-controlled input can reach a shell command, an AI agent, or the runner — the class of bugs behind "pwn request" and prompt-injection attacks in CI pipelines.
+CIGI scans the workflow YAML in a repository's `.github/workflows/` directory and flags patterns where untrusted, attacker-controlled input can reach a shell command, an AI agent, or the runner — the class of bugs behind "pwn request" and prompt-injection attacks in CI pipelines.
 
 It is designed to run as a CI gate: it exits non-zero when it finds issues, so a build can fail on a vulnerable workflow.
 
-> CIGuard is a linter for common dangerous patterns, **not** a proof of safety. A clean report does not guarantee a workflow is secure. See [Limitations](#limitations).
+> CIGI is a linter for common dangerous patterns, **not** a proof of safety. A clean report does not guarantee a workflow is secure. See [Limitations](#limitations).
 
 ---
 
 ## Why this exists
 
-Workflows triggered by events like `pull_request_target`, `issue_comment`, or `issues` run with the *base* repository's permissions and secrets, but their input (issue titles, PR bodies, comments, branch names) is controlled by anyone on the internet. When that untrusted input is interpolated into a shell command or fed to an AI agent that can run tools, an attacker can inject commands or instructions. CIGuard looks for these data-flow patterns automatically.
+Workflows triggered by events like `pull_request_target`, `issue_comment`, or `issues` run with the *base* repository's permissions and secrets, but their input (issue titles, PR bodies, comments, branch names) is controlled by anyone on the internet. When that untrusted input is interpolated into a shell command or fed to an AI agent that can run tools, an attacker can inject commands or instructions. CIGI looks for these data-flow patterns automatically.
 
 The threat-vector taxonomy (TV4–TV7) is based on the Heimdallr research paper (arXiv:2605.05969).
 
@@ -36,14 +36,14 @@ Severity reflects impact: CRITICAL findings can lead to code execution or secret
 Requires **Python 3.10+**.
 
 ```bash
-git clone https://github.com/panther-0707/Ciguard.git
-cd Ciguard
+git clone https://github.com/panther-0707/CIGI.git
+cd CIGI
 python -m venv venv
 source venv/bin/activate        # Windows: venv\Scripts\activate
 pip install -e .
 ```
 
-This installs the `ciguard` command (via `[project.scripts]` in `pyproject.toml`). Dependencies: `pyyaml`, `click`.
+This installs the `cigi` command (via `[project.scripts]` in `pyproject.toml`). Dependencies: `pyyaml`, `click`.
 
 ---
 
@@ -52,19 +52,19 @@ This installs the `ciguard` command (via `[project.scripts]` in `pyproject.toml`
 Scan the current repository:
 
 ```bash
-ciguard scan --path .
+cigi scan --path .
 ```
 
 Scan a different repository:
 
 ```bash
-ciguard scan --path /path/to/repo
+cigi scan --path /path/to/repo
 ```
 
 Show the version:
 
 ```bash
-ciguard version
+cigi version
 ```
 
 ### Exit codes
@@ -74,7 +74,7 @@ ciguard version
 | `0` | No findings (scan clean, or no workflow files found) |
 | `1` | One or more findings reported |
 
-The non-zero exit on findings is what lets CIGuard fail a CI build.
+The non-zero exit on findings is what lets CIGI fail a CI build.
 
 ### Example output
 
@@ -87,12 +87,12 @@ Fix: Pass untrusted values via env: variables instead of ${{ }} in run: blocks
 
 ---
 
-## Running CIGuard in CI
+## Running CIGI in CI
 
-Add a workflow that runs CIGuard on every push and pull request. Because the scan only reads your workflow files, run it on the safe `pull_request` trigger:
+Add a workflow that runs CIGI on every push and pull request. Because the scan only reads your workflow files, run it on the safe `pull_request` trigger:
 
 ```yaml
-name: CIGuard
+name: CIGI
 on: [push, pull_request]
 
 jobs:
@@ -104,16 +104,16 @@ jobs:
         with:
           python-version: "3.12"
       - run: pip install -e .
-      - run: ciguard scan --path .
+      - run: cigi scan --path .
 ```
 
-The job fails automatically if CIGuard reports any findings.
+The job fails automatically if CIGI reports any findings.
 
 ---
 
 ## How it works
 
-CIGuard runs a small pipeline over each workflow file:
+CIGI runs a small pipeline over each workflow file:
 
 1. **Loader** finds `*.yml` / `*.yaml` files under `.github/workflows/`.
 2. **Parser** loads the YAML into typed objects, normalizing the `on:` field (which YAML parses as the boolean `True`, and which may be a string, list, or mapping).
@@ -125,7 +125,7 @@ CIGuard runs a small pipeline over each workflow file:
 
 ## Limitations
 
-CIGuard catches common patterns; it is not exhaustive and can produce both false positives and false negatives. Known gaps in the current version:
+CIGI catches common patterns; it is not exhaustive and can produce both false positives and false negatives. Known gaps in the current version:
 
 - **AI-step identification has a narrow gap.** A step is recognized as an AI step if it uses a known AI action or sets an AI API key directly on the step. A generic step (a plain `run:` or an unknown action) that qualifies as an AI call *only* because it inherits a key from job- or workflow-level `env` may not be recognized as one. Attacker input flowing through inherited job/workflow `env` into a *known* AI step is tracked.
 - **TV5 is a heuristic.** It flags when an AI step received tainted input and *any* later step references a `steps.*.outputs.*` value in a shell command, without confirming the referenced output belongs to the AI step. It may over- or under-report.
@@ -134,7 +134,7 @@ CIGuard catches common patterns; it is not exhaustive and can produce both false
 - **Detection uses substring matching** on expression strings, so unusual syntax (such as index form `['title']`) may not match.
 - **`ATTACKER_SOURCES` is a curated list,** not a complete enumeration of every untrusted GitHub context.
 
-Treat CIGuard's output as a prompt to review a workflow by hand, not as a security guarantee.
+Treat CIGI's output as a prompt to review a workflow by hand, not as a security guarantee.
 
 ---
 
