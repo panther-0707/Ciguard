@@ -8,6 +8,7 @@ from ciguard.scanner.reporter import Reporter
 
 @click.group()
 def main():
+    """CIGuard — detect prompt injection in GitHub Actions workflows."""
     pass
 
 @main.command()
